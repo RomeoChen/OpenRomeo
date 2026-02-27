@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { NConfigProvider, NButton, NCard, NIcon, NSwitch, NAvatar, NBadge, darkTheme } from 'naive-ui'
-import { Sunny, Moon, LogoGithub, CodeSlash, Rocket, MailOutline } from '@vicons/ionicons5'
+import { Sunny, Moon, LogoGithub, CodeSlash, Rocket } from '@vicons/ionicons5'
 
 const isDark = ref(true)
 const themeOverrides = computed(() => ({
