@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { NConfigProvider, NButton, NCard, NIcon, NSwitch, NAvatar, NBadge } from 'naive-ui'
-import { Sunny, Moon, LogoLogoGithub, Twitter, Mail, CodeSlash, Rocket } from '@vicons/ionicons5'
+import { NConfigProvider, NButton, NCard, NIcon, NSwitch, NAvatar, NBadge, darkTheme } from 'naive-ui'
+import { Sunny, Moon, LogoGithub, CodeSlash, Rocket, MailOutline } from '@vicons/ionicons5'
 
 const isDark = ref(true)
 const themeOverrides = computed(() => ({
@@ -31,7 +31,7 @@ const avatarStyle = computed(() => ({ backgroundColor: '#6366f1' }))
 </script>
 
 <template>
-  <NConfigProvider :theme="isDark ? 'dark' : null" :theme-overrides="themeOverrides">
+  <NConfigProvider :theme="isDark ? darkTheme : null" :theme-overrides="themeOverrides">
     <div class="min-h-screen transition-colors duration-300" :class="isDark ? 'bg-gray-950' : 'bg-gray-50'">
       <!-- Header -->
       <header class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b" 
