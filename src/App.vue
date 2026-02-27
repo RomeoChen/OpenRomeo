@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { NConfigProvider, NButton, NCard, NIcon, NSwitch, NAvatar, NBadge } from 'naive-ui'
-import { Sunny, Moon, Github, Twitter, Mail, CodeSlash, Rocket } from '@vicons/ionicons5'
+import { Sunny, Moon, LogoLogoGithub, Twitter, Mail, CodeSlash, Rocket } from '@vicons/ionicons5'
 
 const isDark = ref(true)
 const themeOverrides = computed(() => ({
@@ -26,6 +26,8 @@ const projects = [
 ]
 
 const skills = ['Vue 3', 'TypeScript', 'Node.js', 'Python', 'Git', 'Docker']
+
+const avatarStyle = computed(() => ({ backgroundColor: '#6366f1' }))
 </script>
 
 <template>
@@ -36,12 +38,12 @@ const skills = ['Vue 3', 'TypeScript', 'Node.js', 'Python', 'Git', 'Docker']
         :class="isDark ? 'bg-gray-950/80 border-gray-800' : 'bg-white/80 border-gray-200'">
         <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <NAvatar round :size="36" :style="{ backgroundColor: '#6366f1'">R</NAvatar>
+            <NAvatar :size="36" round :style="avatarStyle">R</NAvatar>
             <span class="font-bold text-xl" :class="isDark ? 'text-white' : 'text-gray-900'">Romeo</span>
           </div>
           <div class="flex items-center gap-4">
             <a :href="'https://github.com/RomeoChen'" target="_blank" class="p-2 rounded-lg hover:bg-gray-800 transition">
-              <NIcon :component="Github" :size="20" />
+              <NIcon :component="LogoGithub" :size="20" />
             </a>
             <NSwitch v-model:value="isDark" :round="false">
               <template #checked>
@@ -80,7 +82,7 @@ const skills = ['Vue 3', 'TypeScript', 'Node.js', 'Python', 'Git', 'Docker']
               </NButton>
               <NButton size="large" ghost>
                 <template #icon>
-                  <NIcon :component="Github" />
+                  <NIcon :component="LogoGithub" />
                 </template>
                 GitHub
               </NButton>
