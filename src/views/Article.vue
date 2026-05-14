@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownIt from 'markdown-it'
-import { NConfigProvider, NIcon, darkTheme } from 'naive-ui'
+import { NConfigProvider, NIcon, darkTheme, NAvatar, NSwitch } from 'naive-ui'
 import { Sunny, Moon, LogoGithub, ArrowBack, Calendar, Pricetag } from '@vicons/ionicons5'
-import { articles } from '../data/articles'
+import { articles, loadArticleContent } from '../data/articles'
 
 const md = new MarkdownIt({
   html: true,
@@ -14,6 +14,8 @@ const md = new MarkdownIt({
 
 const isDark = ref(true)
 const route = useRoute()
+const articleContent = ref('')
+const isLoading = ref(true)
 
 const article = computed(() => {
   const slug = route.params.slug as string
@@ -21,7 +23,7 @@ const article = computed(() => {
 })
 
 const renderedContent = computed(() => {
-  return article.value ? md.render(article.value.content) : ''
+  return articleContent.value ? md.render(articleContent.value) : ''
 })
 
 const themeOverrides = computed(() => ({
@@ -32,6 +34,18 @@ const themeOverrides = computed(() => ({
     borderRadius: '4px',
   }
 }))
+
+// Watch slug changes and load content dynamically
+watch(
+  () => route.params.slug,
+  async (slug) => {
+    if (!slug) return
+    isLoading.value = true
+    articleContent.value = await loadArticleContent(slug as string)
+    isLoading.value = false
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -109,7 +123,14 @@ const themeOverrides = computed(() => ({
                   </span>
                 </div>
               </div>
-              <div class="markdown-body font-mono text-sm leading-relaxed"
+
+              <!-- Loading -->
+              <div v-if="isLoading" class="py-20 text-center">
+                <p class="font-mono text-gray-500">Loading...</p>
+              </div>
+
+              <!-- Content -->
+              <div v-else class="markdown-body font-mono text-sm leading-relaxed"
                 :class="isDark ? 'text-gray-300' : 'text-gray-700'"
                 v-html="renderedContent">
               </div>
