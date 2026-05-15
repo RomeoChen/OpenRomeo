@@ -5,26 +5,126 @@ import MarkdownIt from 'markdown-it'
 import { NConfigProvider, NIcon, darkTheme, NAvatar, NSwitch } from 'naive-ui'
 import { Sunny, Moon, LogoGithub, ArrowBack, Calendar, Pricetag } from '@vicons/ionicons5'
 import { articles, loadArticleContent } from '../data/articles'
+import QuestionBlock from '../components/QuestionBlock.vue'
+
+interface QuestionOption {
+  label: string
+  text: string
+}
+
+interface QuestionData {
+  id: string
+  stem: string
+  choices: QuestionOption[]
+  answer: string
+  explanation?: string
+}
 
 const md = new MarkdownIt({
   html: true,
   linkify: true,
-  typographer: true
+  typographer: true,
+  breaks: true
 })
 
 const isDark = ref(true)
 const route = useRoute()
 const articleContent = ref('')
 const isLoading = ref(true)
+const questions = ref<QuestionData[]>([])
 
 const article = computed(() => {
   const slug = route.params.slug as string
   return articles.find(a => a.slug === slug)
 })
 
+/**
+ * 预处理 Markdown：提取选择题，替换为占位符
+ */
+function preprocessMarkdown(content: string): { html: string; questions: QuestionData[] } {
+  const extractedQuestions: QuestionData[] = []
+  const questionRe = /<!--\s*question\s+id="([^"]+)"\s*-->\s*([\s\S]*?)<!--\s*\/question\s*-->/g
+
+  let processed = content
+  let match: RegExpExecArray | null
+
+  questionRe.lastIndex = 0
+  while ((match = questionRe.exec(content)) !== null) {
+    const qid = match[1].trim()
+    const rawBody = match[2].trim()
+
+    // 解析 answer 代码块
+    const answerRe = /```answer\s*\n([A-D])\s*\n```/i
+    const answerMatch = answerRe.exec(rawBody)
+    const answer = answerMatch ? answerMatch[1].toUpperCase() : ''
+
+    // 去掉 answer 代码块
+    let bodyWithoutAnswer = rawBody
+      .replace(/```answer\s*\n[A-D]\s*\n```/i, '')
+      .trim()
+
+    // 分离解析文字（支持【解析】或「解析」或 解析: 格式）
+    let explanation = ''
+    const explanationRe = /(?:^|\n)(?:【|"|「)?[\u4e00-\u9fa5]*(?:解析)[】:」]?\s*([\s\S]*)$/i
+    const explanationMatch = explanationRe.exec(bodyWithoutAnswer)
+    if (explanationMatch) {
+      explanation = explanationMatch[1].trim()
+      bodyWithoutAnswer = bodyWithoutAnswer.slice(0, explanationMatch.index).trim()
+    }
+
+    // 解析选项 A. B. C. D.
+    const lines = bodyWithoutAnswer.split('\n')
+    const stemLines: string[] = []
+    const choices: QuestionOption[] = []
+
+    for (const line of lines) {
+      const optionMatch = line.match(/^([A-D])\.\s*([\s\S]*)$/i)
+      if (optionMatch) {
+        choices.push({
+          label: optionMatch[1].toUpperCase(),
+          text: optionMatch[2].trim()
+        })
+      } else if (line.trim()) {
+        stemLines.push(line)
+      }
+    }
+
+    const stem = stemLines.join('\n').trim()
+
+    extractedQuestions.push({ id: qid, stem, choices, answer, explanation })
+
+    // 替换为占位注释，渲染时会被忽略
+    processed = processed.replace(match[0], `\n<!-- QUESTION:${extractedQuestions.length - 1} -->\n`)
+  }
+
+  // 渲染 markdown（选择题已被替换为注释）
+  const html = md.render(processed)
+
+  // 清理残留的占位注释
+  const cleanHtml = html.replace(/<!-- QUESTION:\d+ -->/g, '')
+
+  return { html: cleanHtml, questions: extractedQuestions }
+}
+
 const renderedContent = computed(() => {
-  return articleContent.value ? md.render(articleContent.value) : ''
+  if (!articleContent.value) return ''
+  const processed = preprocessMarkdown(articleContent.value)
+  return processed.html
 })
+
+watch(
+  () => route.params.slug,
+  async (slug) => {
+    if (!slug) return
+    isLoading.value = true
+    const content = await loadArticleContent(slug as string)
+    articleContent.value = content
+    const processed = preprocessMarkdown(content)
+    questions.value = processed.questions
+    isLoading.value = false
+  },
+  { immediate: true }
+)
 
 const themeOverrides = computed(() => ({
   common: {
@@ -34,18 +134,6 @@ const themeOverrides = computed(() => ({
     borderRadius: '4px',
   }
 }))
-
-// Watch slug changes and load content dynamically
-watch(
-  () => route.params.slug,
-  async (slug) => {
-    if (!slug) return
-    isLoading.value = true
-    articleContent.value = await loadArticleContent(slug as string)
-    isLoading.value = false
-  },
-  { immediate: true }
-)
 </script>
 
 <template>
@@ -129,10 +217,29 @@ watch(
                 <p class="font-mono text-gray-500">Loading...</p>
               </div>
 
-              <!-- Content -->
-              <div v-else class="markdown-body font-mono text-sm leading-relaxed"
-                :class="isDark ? 'text-gray-300' : 'text-gray-700'"
-                v-html="renderedContent">
+              <!-- Content + Questions -->
+              <div v-else>
+                <!-- Markdown 正文 -->
+                <div class="markdown-body font-mono text-sm leading-relaxed"
+                  :class="isDark ? 'text-gray-300' : 'text-gray-700'"
+                  v-html="renderedContent">
+                </div>
+
+                <!-- 交互式选择题（渲染在 markdown 之后） -->
+                <div v-if="questions.length > 0" class="mt-8 pt-6 border-t border-gray-800">
+                  <div class="flex items-center gap-2 mb-4">
+                    <span class="text-xs font-mono px-2 py-1 rounded bg-green-500/20 text-green-400">
+                      {{ questions.length }} 道练习题
+                    </span>
+                    <span class="text-xs font-mono text-gray-500">已作答题目自动保存到本地</span>
+                  </div>
+                  <QuestionBlock
+                    v-for="q in questions"
+                    :key="q.id"
+                    :data="q"
+                    :slug="article.slug"
+                  />
+                </div>
               </div>
             </div>
             <div v-else class="text-center py-20">
@@ -183,5 +290,18 @@ watch(
   padding-left: 1rem;
   margin: 1rem 0;
   opacity: 0.8;
+}
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+.markdown-body th, .markdown-body td {
+  border: 1px solid;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.markdown-body th {
+  background: rgba(34, 197, 94, 0.1);
 }
 </style>

@@ -297,3 +297,90 @@ A：async/await是Promise的语法糖，让异步代码看起来像同步代码
 
 **Q：事件循环和微任务队列的优先级？**
 A：同一轮事件循环中，**微任务队列优先于宏任务队列**执行
+
+---
+
+## 📝 章节练习题
+
+<!-- question id="week1-eventloop-1" -->
+
+执行以下代码，输出顺序是什么？
+
+```javascript
+console.log('1')
+setTimeout(() => console.log('2'), 0)
+Promise.resolve().then(() => console.log('3'))
+console.log('4')
+```
+
+A. 1 → 2 → 3 → 4
+B. 1 → 4 → 2 → 3
+C. 1 → 3 → 4 → 2
+D. 1 → 4 → 3 → 2
+
+```answer
+D
+```
+
+解析：先执行同步代码（1、4），再执行所有微任务（3），最后执行一个宏任务（2）。
+<!-- /question -->
+
+<!-- question id="week1-closure-1" -->
+
+以下代码运行后，连续调用 `counter()` 三次，输出结果是？
+
+```javascript
+function outer() {
+  let count = 0
+  function inner() {
+    count++
+    console.log(count)
+  }
+  return inner
+}
+const counter = outer()
+counter()
+counter()
+counter()
+```
+
+A. 1, 1, 1
+B. 1, 2, 3
+C. 0, 1, 2
+D. undefined, undefined, undefined
+
+```answer
+B
+```
+
+解析：闭包保留了对外层变量 `count` 的引用，每次调用 `counter()` 都会使 `count` 加 1，所以输出 1, 2, 3。
+<!-- /question -->
+
+<!-- question id="week1-prototype-1" -->
+
+执行以下代码，结果为 `true` 的是？
+
+```javascript
+function Parent() {}
+Parent.prototype.parent = true
+function Child() {}
+Child.prototype = new Parent()
+Child.prototype.constructor = Child
+const child = new Child()
+```
+
+A. child instanceof Parent
+B. child instanceof Child
+C. Child.prototype.__proto__ === Parent.prototype
+D. 以上全部
+
+```answer
+D
+```
+
+解析：
+- `child instanceof Child` ✅（child 是 Child 的实例）
+- `child instanceof Parent` ✅（原型链继承，Parent 在 Child 的原型链上）
+- `Child.prototype.__proto__ === Parent.prototype` ✅（设置 `Child.prototype = new Parent()` 使其成立）
+
+<!-- /question -->
