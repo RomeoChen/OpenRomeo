@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownIt from 'markdown-it'
 import { NConfigProvider, NIcon, darkTheme, NAvatar, NSwitch } from 'naive-ui'
@@ -31,6 +31,7 @@ const isDark = ref(true)
 const route = useRoute()
 const articleContent = ref('')
 const isLoading = ref(true)
+const isTransitioning = ref(false)
 const questions = ref<QuestionData[]>([])
 
 const article = computed(() => {
@@ -116,12 +117,27 @@ watch(
   () => route.params.slug,
   async (slug) => {
     if (!slug) return
+    
+    // Start transition - fade out current content
+    isTransitioning.value = true
+    
+    // Wait for fade out animation
+    await new Promise(resolve => setTimeout(resolve, 150))
+    
+    // Now load new content
     isLoading.value = true
     const content = await loadArticleContent(slug as string)
     articleContent.value = content
     const processed = preprocessMarkdown(content)
     questions.value = processed.questions
+    
+    // Content is ready, show it
     isLoading.value = false
+    
+    // Small delay for DOM to update, then fade in
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 50))
+    isTransitioning.value = false
   },
   { immediate: true }
 )
@@ -212,13 +228,22 @@ const themeOverrides = computed(() => ({
                 </div>
               </div>
 
-              <!-- Loading -->
+              <!-- Loading Skeleton -->
               <div v-if="isLoading" class="py-20 text-center">
-                <p class="font-mono text-gray-500">Loading...</p>
+                <div class="animate-pulse space-y-4">
+                  <div class="h-4 bg-gray-800 rounded w-3/4 mx-auto"></div>
+                  <div class="h-4 bg-gray-800 rounded w-1/2 mx-auto"></div>
+                  <div class="h-32 bg-gray-900 rounded w-full"></div>
+                </div>
+                <p class="font-mono text-gray-500 mt-4">Loading...</p>
               </div>
 
-              <!-- Content + Questions -->
-              <div v-else>
+              <!-- Content + Questions with smooth transition -->
+              <div 
+                v-else
+                class="transition-opacity duration-150 ease-out"
+                :class="isTransitioning ? 'opacity-0' : 'opacity-100'"
+              >
                 <!-- Markdown 正文 -->
                 <div class="markdown-body font-mono text-sm leading-relaxed"
                   :class="isDark ? 'text-gray-300' : 'text-gray-700'"
@@ -303,5 +328,10 @@ const themeOverrides = computed(() => ({
 }
 .markdown-body th {
   background: rgba(34, 197, 94, 0.1);
+}
+
+/* Smooth page transitions */
+main {
+  transition: background-color 0.2s ease;
 }
 </style>
