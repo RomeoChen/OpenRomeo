@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { NConfigProvider, NButton, NIcon, NSwitch, NAvatar, darkTheme } from 'naive-ui'
-import { Sunny, Moon, LogoGithub, CodeSlash, DocumentText, Flash } from '@vicons/ionicons5'
+import { Sunny, Moon, LogoGithub, CodeSlash, DocumentText, Flash, GitNetwork, Bulb } from '@vicons/ionicons5'
 import { articles } from '../data/articles'
 
 const isDark = ref(true)
@@ -72,9 +72,57 @@ const avatarStyle = computed(() => ({ backgroundColor: '#22c55e' }))
           <!-- Articles -->
           <section class="mb-16">
             <h2 class="text-xs font-mono uppercase tracking-wider mb-4" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
-              ## Articles
+              ## Projects
             </h2>
             <div class="space-y-3">
+              <!-- Disease Network -->
+              <a href="/disease-network"
+                class="block p-4 border-2 border-cyan-500/30 rounded transition hover:border-cyan-500/60"
+                :class="isDark ? 'bg-cyan-500/5' : 'bg-cyan-500/5'">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="font-mono text-sm font-bold" :class="isDark ? 'text-cyan-400' : 'text-cyan-600'">
+                    🔬 慢病共病网络图
+                  </span>
+                  <NIcon :component="GitNetwork" :size="16" class="text-cyan-500" />
+                </div>
+                <p class="text-xs font-mono mb-2" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
+                  可视化18种慢性病的关联网络 · 探索共病关系
+                </p>
+                <div class="flex gap-2">
+                  <span class="px-1.5 py-0.5 text-xs font-mono border border-cyan-500/30 text-cyan-500 rounded">
+                    可视化
+                  </span>
+                  <span class="px-1.5 py-0.5 text-xs font-mono border"
+                    :class="isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-500'">
+                    18种疾病
+                  </span>
+                </div>
+              </a>
+
+              <!-- Recommendation -->
+              <a href="/recommendation"
+                class="block p-4 border-2 border-amber-500/30 rounded transition hover:border-amber-500/60"
+                :class="isDark ? 'bg-amber-500/5' : 'bg-amber-500/5'">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="font-mono text-sm font-bold" :class="isDark ? 'text-amber-400' : 'text-amber-600'">
+                    💡 慢病干预推荐系统
+                  </span>
+                  <NIcon :component="Bulb" :size="16" class="text-amber-500" />
+                </div>
+                <p class="text-xs font-mono mb-2" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
+                  基于患者信息生成个性化干预方案 · 药物+饮食+运动
+                </p>
+                <div class="flex gap-2">
+                  <span class="px-1.5 py-0.5 text-xs font-mono border border-amber-500/30 text-amber-500 rounded">
+                    推荐系统
+                  </span>
+                  <span class="px-1.5 py-0.5 text-xs font-mono border"
+                    :class="isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-500'">
+                    个性化
+                  </span>
+                </div>
+              </a>
+
               <!-- Featured: Quiz -->
             <a href="/quiz"
               class="block p-4 border-2 border-green-500/30 rounded transition hover:border-green-500/60"
