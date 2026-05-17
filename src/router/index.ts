@@ -4,6 +4,7 @@ import Article from '../views/Article.vue'
 import Quiz from '../views/Quiz.vue'
 import DiseaseNetwork from '../views/DiseaseNetwork.vue'
 import Recommendation from '../views/Recommendation.vue'
+import Disease3D from '../views/Disease3D.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -11,6 +12,7 @@ const routes = [
   { path: '/quiz', name: 'quiz', component: Quiz },
   { path: '/disease-network', name: 'disease-network', component: DiseaseNetwork },
   { path: '/recommendation', name: 'recommendation', component: Recommendation },
+  { path: '/disease-3d', name: 'disease-3d', component: Disease3D },
 ]
 
 const router = createRouter({

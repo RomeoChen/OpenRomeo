@@ -14,9 +14,11 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@types/d3": "^7.4.3",
     "@types/markdown-it": "^14.1.2",
     "@vicons/ionicons5": "^0.13.0",
     "@vueuse/core": "^13.0.0",
+    "d3": "^7.9.0",
     "markdown-it": "^14.1.1",
     "naive-ui": "^2.43.2",
     "vis-data": "^8.0.3",
