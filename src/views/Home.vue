@@ -1,22 +1,3 @@
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-import { NConfigProvider, NButton, NIcon, NSwitch, NAvatar, darkTheme } from 'naive-ui'
-import { Sunny, Moon, LogoGithub, CodeSlash, DocumentText, Flash, GitNetwork, Bulb, Globe } from '@vicons/ionicons5'
-import { articles } from '../data/articles'
-
-const isDark = ref(true)
-const themeOverrides = computed(() => ({
-  common: {
-    primaryColor: '#22c55e',
-    primaryColorHover: '#4ade80',
-    primaryColorPressed: '#16a34a',
-    borderRadius: '4px',
-  }
-}))
-
-const avatarStyle = computed(() => ({ backgroundColor: '#22c55e' }))
-</script>
-
 <template>
   <NConfigProvider :theme="isDark ? darkTheme : null" :theme-overrides="themeOverrides">
     <div class="min-h-screen" :class="isDark ? 'bg-black text-gray-300' : 'bg-white text-gray-700'">
@@ -47,6 +28,7 @@ const avatarStyle = computed(() => ({ backgroundColor: '#22c55e' }))
       <!-- Main -->
       <main class="pt-28 pb-16 px-6">
         <div class="max-w-3xl mx-auto">
+
           <!-- Hero -->
           <section class="mb-16">
             <div class="flex items-center gap-2 text-xs font-mono mb-4" :class="isDark ? 'text-green-500' : 'text-green-600'">
@@ -69,7 +51,45 @@ const avatarStyle = computed(() => ({ backgroundColor: '#22c55e' }))
             </div>
           </section>
 
-          <!-- Articles -->
+          <!-- Learning Hub -->
+          <section class="mb-8">
+            <h2 class="text-xs font-mono uppercase tracking-wider mb-4" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+              ## Learning
+            </h2>
+            <a href="/articles"
+              class="block p-5 border-2 border-green-500/30 rounded-xl transition hover:border-green-500/60"
+              :class="isDark ? 'bg-green-500/5' : 'bg-green-500/5'">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <span class="w-10 h-10 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center">
+                    <NIcon :component="Book" :size="20" />
+                  </span>
+                  <div>
+                    <span class="font-mono text-base font-bold text-green-400">
+                      学习笔记
+                    </span>
+                    <p class="text-xs font-mono mt-0.5" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
+                      {{ articles.length }} 篇文章 · 前端 · AI · 求职
+                    </p>
+                  </div>
+                </div>
+                <NIcon :component="ArrowForward" :size="18" class="text-green-500/60 mt-1" />
+              </div>
+              <!-- Tags preview -->
+              <div class="flex flex-wrap gap-2">
+                <span class="px-2 py-1 text-xs font-mono border border-green-500/30 text-green-500 rounded">
+                  {{ articles.length }} 篇文章
+                </span>
+                <span v-for="tag in uniqueTags" :key="tag" 
+                  class="px-2 py-1 text-xs font-mono border"
+                  :class="isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-500'">
+                  {{ tag }}
+                </span>
+              </div>
+            </a>
+          </section>
+
+          <!-- Projects -->
           <section class="mb-16">
             <h2 class="text-xs font-mono uppercase tracking-wider mb-4" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
               ## Projects
@@ -148,51 +168,31 @@ const avatarStyle = computed(() => ({ backgroundColor: '#22c55e' }))
               </a>
 
               <!-- Featured: Quiz -->
-            <a href="/quiz"
-              class="block p-4 border-2 border-green-500/30 rounded transition hover:border-green-500/60"
-              :class="isDark ? 'bg-green-500/5' : 'bg-green-500/5'">
-              <div class="flex items-start justify-between mb-2">
-                <span class="font-mono text-sm font-bold" :class="isDark ? 'text-green-400' : 'text-green-600'">
-                  🚀 前端求职刷题练习
-                </span>
-                <NIcon :component="Flash" :size="16" class="text-green-500" />
-              </div>
-              <p class="text-xs font-mono mb-2" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
-                8周学习计划 · 55+道面试题 · 选择题 + 自由回答
-              </p>
-              <div class="flex gap-2">
-                <span class="px-1.5 py-0.5 text-xs font-mono border border-green-500/30 text-green-500 rounded">
-                  刷题
-                </span>
-                <span class="px-1.5 py-0.5 text-xs font-mono border"
-                  :class="isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-500'">
-                  题目有答案
-                </span>
-              </div>
-            </a>
-
-            <!-- Articles -->
-            <a v-for="article in articles" :key="article.slug" 
-                :href="'/article/' + article.slug"
-                class="block p-4 border rounded transition"
-                :class="isDark ? 'border-gray-800 hover:border-gray-700' : 'border-gray-200 hover:border-gray-300'">
+              <a href="/quiz"
+                class="block p-4 border-2 border-green-500/30 rounded transition hover:border-green-500/60"
+                :class="isDark ? 'bg-green-500/5' : 'bg-green-500/5'">
                 <div class="flex items-start justify-between mb-2">
-                  <span class="font-mono text-sm font-medium" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
-                    {{ article.title }}
+                  <span class="font-mono text-sm font-bold" :class="isDark ? 'text-green-400' : 'text-green-600'">
+                    🚀 前端求职刷题练习
                   </span>
-                  <NIcon :component="DocumentText" :size="16" :class="isDark ? 'text-gray-600' : 'text-gray-400'" />
+                  <NIcon :component="Flash" :size="16" class="text-green-500" />
                 </div>
-                <p class="text-xs font-mono mb-2" :class="isDark ? 'text-gray-500' : 'text-gray-500'">{{ article.date }}</p>
+                <p class="text-xs font-mono mb-2" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
+                  8周学习计划 · 55+道面试题 · 选择题 + 自由回答
+                </p>
                 <div class="flex gap-2">
-                  <span v-for="tag in article.tags" :key="tag" 
-                    class="px-1.5 py-0.5 text-xs font-mono border"
-                    :class="isDark ? 'border-gray-800 text-gray-500' : 'border-gray-200 text-gray-500'">
-                    {{ tag }}
+                  <span class="px-1.5 py-0.5 text-xs font-mono border border-green-500/30 text-green-500 rounded">
+                    刷题
+                  </span>
+                  <span class="px-1.5 py-0.5 text-xs font-mono border"
+                    :class="isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-500'">
+                    题目有答案
                   </span>
                 </div>
               </a>
             </div>
           </section>
+
         </div>
       </main>
 
@@ -203,3 +203,32 @@ const avatarStyle = computed(() => ({ backgroundColor: '#22c55e' }))
     </div>
   </NConfigProvider>
 </template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { NConfigProvider, NButton, NIcon, NSwitch, NAvatar, darkTheme } from 'naive-ui'
+import {
+  Sunny, Moon, LogoGithub, CodeSlash, Flash, GitNetwork, Bulb, Globe,
+  Book, ArrowForward
+} from '@vicons/ionicons5'
+import { articles } from '../data/articles'
+
+const isDark = ref(true)
+const themeOverrides = computed(() => ({
+  common: {
+    primaryColor: '#22c55e',
+    primaryColorHover: '#4ade80',
+    primaryColorPressed: '#16a34a',
+    borderRadius: '4px',
+  }
+}))
+
+const avatarStyle = computed(() => ({ backgroundColor: '#22c55e' }))
+
+// Unique tags across all articles
+const uniqueTags = computed(() => {
+  const tagSet = new Set<string>()
+  articles.forEach(a => a.tags.forEach(t => tagSet.add(t)))
+  return Array.from(tagSet).slice(0, 6)
+})
+</script>
