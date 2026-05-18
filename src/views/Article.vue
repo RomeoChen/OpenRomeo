@@ -3,7 +3,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import MarkdownIt from 'markdown-it'
 import { NConfigProvider, NIcon, darkTheme, NAvatar, NSwitch } from 'naive-ui'
-import { Sunny, Moon, LogoGithub, ArrowBack, Calendar, Pricetag } from '@vicons/ionicons5'
+import { Sunny, Moon, LogoGithub, ArrowBack, Calendar, Pricetag, Menu, Close } from '@vicons/ionicons5'
 import { articles, loadArticleContent } from '../data/articles'
 import QuestionBlock from '../components/QuestionBlock.vue'
 
@@ -33,6 +33,7 @@ const articleContent = ref('')
 const isLoading = ref(true)
 const isTransitioning = ref(false)
 const questions = ref<QuestionData[]>([])
+const sidebarOpen = ref(false)
 
 const article = computed(() => {
   const slug = route.params.slug as string
@@ -150,6 +151,15 @@ const themeOverrides = computed(() => ({
     borderRadius: '4px',
   }
 }))
+
+function getArticleHasQuestions(slug: string): boolean {
+  return slug.includes('面试') || slug.includes('求职') || slug.includes('Week')
+}
+
+// Auto-close sidebar on route change
+watch(() => route.params.slug, () => {
+  sidebarOpen.value = false
+})
 </script>
 
 <template>
@@ -182,28 +192,58 @@ const themeOverrides = computed(() => ({
       <!-- Main -->
       <main class="pt-20 pb-16 px-6">
         <div class="max-w-5xl mx-auto flex gap-8">
+          <!-- Mobile toggle button -->
+          <button
+            @click="sidebarOpen = !sidebarOpen"
+            class="md:hidden fixed bottom-4 left-4 z-50 w-12 h-12 rounded-full bg-green-600 text-white shadow-lg flex items-center justify-center"
+          >
+            <NIcon :component="Menu" :size="20" />
+          </button>
+
+          <!-- Overlay (mobile) -->
+          <div
+            v-if="sidebarOpen"
+            @click="sidebarOpen = false"
+            class="md:hidden fixed inset-0 bg-black/50 z-40"
+          ></div>
+
           <!-- Left: Article Menu -->
-          <aside class="w-64 shrink-0 hidden md:block">
-            <div class="fixed top-20 overflow-y-auto max-h-[calc(100vh-6rem)] w-64 pr-4">
+          <aside
+            class="w-64 shrink-0 fixed md:static inset-y-0 left-0 z-50 overflow-y-auto transition-transform duration-200"
+            :class="isDark ? 'bg-black border-r border-gray-800' : 'bg-white border-r border-gray-200'"
+            :style="{ transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)' }"
+          >
+            <!-- Mobile header with close button -->
+            <div class="flex items-center justify-between p-4 md:hidden border-b"
+              :class="isDark ? 'border-gray-800' : 'border-gray-200'">
+              <span class="text-xs font-mono text-gray-400">文章列表</span>
+              <button @click="sidebarOpen = false" class="p-1">
+                <NIcon :component="Close" :size="18" class="text-gray-400" />
+              </button>
+            </div>
+
+            <div class="p-4 md:pt-20">
               <a href="/" class="flex items-center gap-2 text-xs font-mono mb-4 hover:opacity-60" 
                 :class="isDark ? 'text-green-500' : 'text-green-600'">
                 <NIcon :component="ArrowBack" :size="14" />
-                <span>← Back</span>
+                <span>← 首页</span>
               </a>
               <h3 class="text-xs font-mono uppercase tracking-wider mb-3" 
                 :class="isDark ? 'text-gray-500' : 'text-gray-400'">
-                ## Articles
+                ## 文章列表
               </h3>
               <div class="space-y-1">
                 <a v-for="a in articles" :key="a.slug" 
                   :href="'/article/' + a.slug"
+                  @click="sidebarOpen = false"
                   class="block text-xs font-mono py-1.5 px-2 rounded transition"
                   :class="[
                     a.slug === article?.slug 
-                      ? (isDark ? 'bg-gray-800 text-gray-100' : 'bg-gray-100 text-gray-900')
-                      : (isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-900')
+                      ? (isDark ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-green-50 text-green-700 border border-green-200')
+                      : (isDark ? 'text-gray-400 hover:text-gray-200 border border-transparent' : 'text-gray-600 hover:text-gray-900 border border-transparent')
                   ]">
                   {{ a.title }}
+                  <span v-if="getArticleHasQuestions(a.slug)" class="ml-1 text-green-400 text-[10px]">✎</span>
                 </a>
               </div>
             </div>
