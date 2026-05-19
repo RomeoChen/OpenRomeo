@@ -119,21 +119,21 @@
                 </div>
               </a>
 
-              <!-- Disease 3D -->
-              <a href="/disease-3d"
-                class="block p-4 border-2 border-purple-500/30 rounded transition hover:border-purple-500/60"
-                :class="isDark ? 'bg-purple-500/5' : 'bg-purple-500/5'">
+              <!-- Globe 3D -->
+              <a href="/globe-3d"
+                class="block p-4 border-2 border-emerald-500/30 rounded transition hover:border-emerald-500/60"
+                :class="isDark ? 'bg-emerald-500/5' : 'bg-emerald-500/5'">
                 <div class="flex items-start justify-between mb-2">
-                  <span class="font-mono text-sm font-bold" :class="isDark ? 'text-purple-400' : 'text-purple-600'">
-                    🌐 慢病 3D 星图
+                  <span class="font-mono text-sm font-bold" :class="isDark ? 'text-emerald-400' : 'text-emerald-600'">
+                    🌍 模拟地球 3D
                   </span>
-                  <NIcon :component="Globe" :size="16" class="text-purple-500" />
+                  <NIcon :component="Globe" :size="16" class="text-emerald-500" />
                 </div>
                 <p class="text-xs font-mono mb-2" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
-                  3D 疾病关系可视化 · 拖拽旋转 · 滚轮缩放
+                  3D 旋转地球 · 悬停查看大洲 · 拖拽旋转 · 滚轮缩放
                 </p>
                 <div class="flex gap-2">
-                  <span class="px-1.5 py-0.5 text-xs font-mono border border-purple-500/30 text-purple-500 rounded">
+                  <span class="px-1.5 py-0.5 text-xs font-mono border border-emerald-500/30 text-emerald-500 rounded">
                     3D
                   </span>
                   <span class="px-1.5 py-0.5 text-xs font-mono border"
