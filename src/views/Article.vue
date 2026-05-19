@@ -190,8 +190,8 @@ watch(() => route.params.slug, () => {
       </header>
 
       <!-- Main -->
-      <main class="pt-20 pb-16 px-6">
-        <div class="max-w-5xl mx-auto flex gap-8">
+      <main class="pt-20 pb-16 px-4 sm:px-6">
+        <div class="max-w-5xl mx-auto flex gap-4 md:gap-8">
           <!-- Mobile toggle button -->
           <button
             @click="sidebarOpen = !sidebarOpen"
@@ -250,7 +250,7 @@ watch(() => route.params.slug, () => {
           </aside>
 
           <!-- Right: Article Content -->
-          <article class="flex-1 min-w-0">
+          <article class="flex-1 min-w-0 overflow-hidden">
             <div v-if="article" class="max-w-3xl">
               <div class="mb-8">
                 <h1 class="text-2xl font-mono font-bold mb-3" :class="isDark ? 'text-gray-100' : 'text-gray-900'">
@@ -285,7 +285,7 @@ watch(() => route.params.slug, () => {
                 :class="isTransitioning ? 'opacity-0' : 'opacity-100'"
               >
                 <!-- Markdown 正文 -->
-                <div class="markdown-body font-mono text-sm leading-relaxed"
+                <div class="markdown-body font-mono text-sm leading-relaxed overflow-x-auto max-w-full"
                   :class="isDark ? 'text-gray-300' : 'text-gray-700'"
                   v-html="renderedContent">
                 </div>
@@ -358,16 +358,32 @@ watch(() => route.params.slug, () => {
 }
 .markdown-body table {
   width: 100%;
+  min-width: 400px;
   border-collapse: collapse;
   margin: 1rem 0;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .markdown-body th, .markdown-body td {
   border: 1px solid;
   padding: 0.5rem 0.75rem;
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .markdown-body th {
   background: rgba(34, 197, 94, 0.1);
+}
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Smooth page transitions */
