@@ -75,7 +75,6 @@
                 </div>
                 <NIcon :component="ArrowForward" :size="18" class="text-green-500/60 mt-1" />
               </div>
-              <!-- Tags preview -->
               <div class="flex flex-wrap gap-2">
                 <span class="px-2 py-1 text-xs font-mono border border-green-500/30 text-green-500 rounded">
                   {{ articles.length }} 篇文章
@@ -89,108 +88,62 @@
             </a>
           </section>
 
-          <!-- Projects -->
-          <section class="mb-16">
+          <!-- Projects Hub -->
+          <section class="mb-8">
             <h2 class="text-xs font-mono uppercase tracking-wider mb-4" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
               ## Projects
             </h2>
-            <div class="space-y-3">
-              <!-- Disease Network -->
-              <a href="/disease-network"
-                class="block p-4 border-2 border-cyan-500/30 rounded transition hover:border-cyan-500/60"
-                :class="isDark ? 'bg-cyan-500/5' : 'bg-cyan-500/5'">
-                <div class="flex items-start justify-between mb-2">
-                  <span class="font-mono text-sm font-bold" :class="isDark ? 'text-cyan-400' : 'text-cyan-600'">
-                    🔬 慢病共病网络图
+            <a href="/projects"
+              class="block p-5 border-2 border-cyan-500/30 rounded-xl transition hover:border-cyan-500/60"
+              :class="isDark ? 'bg-cyan-500/5' : 'bg-cyan-500/5'">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <span class="w-10 h-10 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                    <NIcon :component="Cube" :size="20" />
                   </span>
-                  <NIcon :component="GitNetwork" :size="16" class="text-cyan-500" />
+                  <div>
+                    <span class="font-mono text-base font-bold text-cyan-400">
+                      项目集
+                    </span>
+                    <p class="text-xs font-mono mt-0.5" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
+                      {{ projectCount }} 个项目 · 可视化 · 推荐系统 · 学习工具
+                    </p>
+                  </div>
                 </div>
-                <p class="text-xs font-mono mb-2" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
-                  可视化18种慢性病的关联网络 · 探索共病关系
-                </p>
-                <div class="flex gap-2">
-                  <span class="px-1.5 py-0.5 text-xs font-mono border border-cyan-500/30 text-cyan-500 rounded">
-                    可视化
-                  </span>
-                  <span class="px-1.5 py-0.5 text-xs font-mono border"
-                    :class="isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-500'">
-                    18种疾病
-                  </span>
-                </div>
-              </a>
+                <NIcon :component="ArrowForward" :size="18" class="text-cyan-500/60 mt-1" />
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <span class="px-2 py-1 text-xs font-mono border border-cyan-500/30 text-cyan-400 rounded">🔬 慢病共病网络图</span>
+                <span class="px-2 py-1 text-xs font-mono border border-cyan-500/30 text-cyan-400 rounded">🌐 慢病 3D 星图</span>
+                <span class="px-2 py-1 text-xs font-mono border border-cyan-500/30 text-cyan-400 rounded">💡 慢病干预推荐</span>
+                <span class="px-2 py-1 text-xs font-mono border" :class="isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-500'">+ 1 更多</span>
+              </div>
+            </a>
+          </section>
 
-              <!-- Globe 3D -->
-              <a href="/globe-3d"
-                class="block p-4 border-2 border-emerald-500/30 rounded transition hover:border-emerald-500/60"
-                :class="isDark ? 'bg-emerald-500/5' : 'bg-emerald-500/5'">
-                <div class="flex items-start justify-between mb-2">
-                  <span class="font-mono text-sm font-bold" :class="isDark ? 'text-emerald-400' : 'text-emerald-600'">
-                    🌍 模拟地球 3D
-                  </span>
-                  <NIcon :component="Globe" :size="16" class="text-emerald-500" />
+          <!-- Tools -->
+          <section class="mb-16">
+            <h2 class="text-xs font-mono uppercase tracking-wider mb-4" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+              ## Tools
+            </h2>
+            <a href="/quiz"
+              class="block p-4 border-2 border-green-500/30 rounded-xl transition hover:border-green-500/60"
+              :class="isDark ? 'bg-green-500/5' : 'bg-green-500/5'">
+              <div class="flex items-start justify-between">
+                <div class="flex items-center gap-3">
+                  <NIcon :component="Flash" :size="20" class="text-green-500" />
+                  <div>
+                    <span class="font-mono text-sm font-bold" :class="isDark ? 'text-green-400' : 'text-green-600'">
+                      前端求职刷题练习
+                    </span>
+                    <p class="text-xs font-mono mt-0.5" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
+                      8周学习计划 · 55+道面试题 · 即时判分
+                    </p>
+                  </div>
                 </div>
-                <p class="text-xs font-mono mb-2" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
-                  3D 旋转地球 · 悬停查看大洲 · 拖拽旋转 · 滚轮缩放
-                </p>
-                <div class="flex gap-2">
-                  <span class="px-1.5 py-0.5 text-xs font-mono border border-emerald-500/30 text-emerald-500 rounded">
-                    3D
-                  </span>
-                  <span class="px-1.5 py-0.5 text-xs font-mono border"
-                    :class="isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-500'">
-                    交互式
-                  </span>
-                </div>
-              </a>
-
-              <!-- Recommendation -->
-              <a href="/recommendation"
-                class="block p-4 border-2 border-amber-500/30 rounded transition hover:border-amber-500/60"
-                :class="isDark ? 'bg-amber-500/5' : 'bg-amber-500/5'">
-                <div class="flex items-start justify-between mb-2">
-                  <span class="font-mono text-sm font-bold" :class="isDark ? 'text-amber-400' : 'text-amber-600'">
-                    💡 慢病干预推荐系统
-                  </span>
-                  <NIcon :component="Bulb" :size="16" class="text-amber-500" />
-                </div>
-                <p class="text-xs font-mono mb-2" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
-                  基于患者信息生成个性化干预方案 · 药物+饮食+运动
-                </p>
-                <div class="flex gap-2">
-                  <span class="px-1.5 py-0.5 text-xs font-mono border border-amber-500/30 text-amber-500 rounded">
-                    推荐系统
-                  </span>
-                  <span class="px-1.5 py-0.5 text-xs font-mono border"
-                    :class="isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-500'">
-                    个性化
-                  </span>
-                </div>
-              </a>
-
-              <!-- Featured: Quiz -->
-              <a href="/quiz"
-                class="block p-4 border-2 border-green-500/30 rounded transition hover:border-green-500/60"
-                :class="isDark ? 'bg-green-500/5' : 'bg-green-500/5'">
-                <div class="flex items-start justify-between mb-2">
-                  <span class="font-mono text-sm font-bold" :class="isDark ? 'text-green-400' : 'text-green-600'">
-                    🚀 前端求职刷题练习
-                  </span>
-                  <NIcon :component="Flash" :size="16" class="text-green-500" />
-                </div>
-                <p class="text-xs font-mono mb-2" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
-                  8周学习计划 · 55+道面试题 · 选择题 + 自由回答
-                </p>
-                <div class="flex gap-2">
-                  <span class="px-1.5 py-0.5 text-xs font-mono border border-green-500/30 text-green-500 rounded">
-                    刷题
-                  </span>
-                  <span class="px-1.5 py-0.5 text-xs font-mono border"
-                    :class="isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-500'">
-                    题目有答案
-                  </span>
-                </div>
-              </a>
-            </div>
+                <NIcon :component="ArrowForward" :size="16" class="text-green-500/60 mt-1" />
+              </div>
+            </a>
           </section>
 
         </div>
@@ -208,12 +161,14 @@
 import { ref, computed } from 'vue'
 import { NConfigProvider, NButton, NIcon, NSwitch, NAvatar, darkTheme } from 'naive-ui'
 import {
-  Sunny, Moon, LogoGithub, CodeSlash, Flash, GitNetwork, Bulb, Globe,
-  Book, ArrowForward
+  Sunny, Moon, LogoGithub, CodeSlash, Flash, Book, ArrowForward, Cube
 } from '@vicons/ionicons5'
 import { articles } from '../data/articles'
+import { projects } from '../data/projects'
 
 const isDark = ref(true)
+const projectCount = projects.length
+
 const themeOverrides = computed(() => ({
   common: {
     primaryColor: '#22c55e',
@@ -225,7 +180,6 @@ const themeOverrides = computed(() => ({
 
 const avatarStyle = computed(() => ({ backgroundColor: '#22c55e' }))
 
-// Unique tags across all articles
 const uniqueTags = computed(() => {
   const tagSet = new Set<string>()
   articles.forEach(a => a.tags.forEach(t => tagSet.add(t)))

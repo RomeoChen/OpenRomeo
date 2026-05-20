@@ -13,6 +13,7 @@ const selectedMultiple = ref<number[]>([])
 const freeAnswer = ref('')
 const showAnswer = ref(false)
 const isTransitioning = ref(false)
+const showCorrectness = ref(false) // 点击选项后立即显示对错
 
 // ── Theme ────────────────────────────────────────────
 const themeOverrides = computed(() => ({
@@ -83,6 +84,7 @@ function markAnswered() {
 
 function handleSingleSelect(idx: number) {
   selectedSingle.value = idx
+  showCorrectness.value = true
   markAnswered()
 }
 
@@ -94,12 +96,14 @@ function handleMultipleToggle(idx: number) {
     selectedMultiple.value = selectedMultiple.value.filter(v => v !== idx)
   }
   if (selectedMultiple.value.length > 0) {
+    showCorrectness.value = true
     markAnswered()
   }
 }
 
 function handleFreeInput() {
   if (freeAnswer.value.trim().length > 0) {
+    showCorrectness.value = true
     markAnswered()
   }
 }
@@ -113,6 +117,7 @@ function goTo(index: number) {
     selectedMultiple.value = []
     freeAnswer.value = ''
     showAnswer.value = false
+    showCorrectness.value = false
     isTransitioning.value = false
     saveProgress()
   }, 120)
@@ -152,6 +157,22 @@ function typeLabel(type: string) {
   if (type === 'multiple') return '多选'
   return '自由回答'
 }
+
+// ── Correctness feedback ─────────────────────────────
+// Maps option index → 'correct' | 'wrong' | null
+const optionCorrectness = computed(() => {
+  if (!showCorrectness.value || !currentQ.value) return null
+  if (currentQ.value.type === 'free') return null
+  const correct = currentQ.value.correctAnswer ?? []
+  const selected = currentQ.value.type === 'single'
+    ? (selectedSingle.value !== null ? [selectedSingle.value] : [])
+    : selectedMultiple.value
+  return (idx: number) => {
+    if (correct.includes(idx)) return 'correct'
+    if (selected.includes(idx)) return 'wrong'
+    return null
+  }
+})
 
 // Keyboard nav handled in handleKeydown
 // ── Watch for keyboard nav ──────────────────────────
@@ -292,20 +313,25 @@ onMounted(() => {
                 v-for="(opt, idx) in currentQ.options"
                 :key="idx"
                 @click="currentQ.type === 'single' ? handleSingleSelect(idx) : handleMultipleToggle(idx)"
-                class="w-full text-left px-4 py-3 rounded border text-sm font-mono transition-all duration-150"
+                class="w-full text-left px-4 py-3 rounded border text-sm font-mono transition-all duration-150 relative"
                 :class="[
-                  currentQ.type === 'single'
-                    ? (selectedSingle === idx
-                        ? 'border-green-500 bg-green-500/10 text-green-400'
-                        : isDark ? 'border-gray-700 hover:border-gray-600 text-gray-300' : 'border-gray-200 hover:border-gray-300 text-gray-700')
-                    : (selectedMultiple.includes(idx)
-                        ? 'border-green-500 bg-green-500/10 text-green-400'
-                        : isDark ? 'border-gray-700 hover:border-gray-600 text-gray-300' : 'border-gray-200 hover:border-gray-300 text-gray-700')
+                  showCorrectness && optionCorrectness && optionCorrectness(idx) === 'correct'
+                    ? 'border-green-500 bg-green-500/10 text-green-400'
+                    : showCorrectness && optionCorrectness && optionCorrectness(idx) === 'wrong'
+                    ? 'border-red-500 bg-red-500/10 text-red-400'
+                    : currentQ.type === 'single' && selectedSingle === idx
+                    ? 'border-green-500 bg-green-500/10 text-green-400'
+                    : currentQ.type === 'multiple' && selectedMultiple.includes(idx)
+                    ? 'border-green-500 bg-green-500/10 text-green-400'
+                    : isDark ? 'border-gray-700 hover:border-gray-600 text-gray-300' : 'border-gray-200 hover:border-gray-300 text-gray-700'
                 ]">
                 <span class="inline-block w-6">{{ opt.charAt(0) }}</span>
                 <span>{{ opt.substring(2) }}</span>
-                <NIcon v-if="currentQ.type === 'single' && selectedSingle === idx" :component="Checkmark" :size="14" class="float-right mt-0.5 text-green-500" />
-                <NIcon v-if="currentQ.type === 'multiple' && selectedMultiple.includes(idx)" :component="Checkmark" :size="14" class="float-right mt-0.5 text-green-500" />
+                <!-- Correctness icons -->
+                <span v-if="showCorrectness && optionCorrectness && optionCorrectness(idx) === 'correct'" class="float-right mt-0.5 text-green-500 font-bold">✓</span>
+                <span v-if="showCorrectness && optionCorrectness && optionCorrectness(idx) === 'wrong'" class="float-right mt-0.5 text-red-500 font-bold">✗</span>
+                <NIcon v-else-if="currentQ.type === 'single' && selectedSingle === idx" :component="Checkmark" :size="14" class="float-right mt-0.5 text-green-500" />
+                <NIcon v-else-if="currentQ.type === 'multiple' && selectedMultiple.includes(idx)" :component="Checkmark" :size="14" class="float-right mt-0.5 text-green-500" />
               </button>
             </div>
 
