@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { NConfigProvider, NButton, NIcon, NSwitch, NAvatar, darkTheme } from 'naive-ui'
-import { Sunny, Moon, LogoGithub, CodeSlash, DocumentText, Flash } from '@vicons/ionicons5'
+import { Sunny, Moon, LogoGithub, CodeSlash, DocumentText, Flash, BarChart } from '@vicons/ionicons5'
 import { articles } from '../data/articles'
 
 const isDark = ref(true)
@@ -75,6 +75,30 @@ const avatarStyle = computed(() => ({ backgroundColor: '#22c55e' }))
               ## Articles
             </h2>
             <div class="space-y-3">
+              <!-- Featured: Charts -->
+            <a href="/charts"
+              class="block p-4 border-2 border-yellow-500/30 rounded transition hover:border-yellow-500/60"
+              :class="isDark ? 'bg-yellow-500/5' : 'bg-yellow-500/5'">
+              <div class="flex items-start justify-between mb-2">
+                <span class="font-mono text-sm font-bold" :class="isDark ? 'text-yellow-400' : 'text-yellow-600'">
+                  📊 数据可视化展示
+                </span>
+                <NIcon :component="BarChart" :size="16" class="text-yellow-500" />
+              </div>
+              <p class="text-xs font-mono mb-2" :class="isDark ? 'text-gray-400' : 'text-gray-600'">
+                ECharts 图表展示 · 奢华高级风格
+              </p>
+              <div class="flex gap-2">
+                <span class="px-1.5 py-0.5 text-xs font-mono border border-yellow-500/30 text-yellow-500 rounded">
+                  可视化
+                </span>
+                <span class="px-1.5 py-0.5 text-xs font-mono border"
+                  :class="isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-500'">
+                  6种图表
+                </span>
+              </div>
+            </a>
+
               <!-- Featured: Quiz -->
             <a href="/quiz"
               class="block p-4 border-2 border-green-500/30 rounded transition hover:border-green-500/60"
