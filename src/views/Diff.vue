@@ -28,18 +28,28 @@ function selectDiff(diffId: string) {
   selectedDiffId.value = selectedDiffId.value === diffId ? null : diffId
 }
 
-// 生成连接线的路径
+// 生成连接线的路径 - 从左侧框边缘直接连到右侧框边缘
 function getConnectionPath(diff: typeof diffImages[0]['diffs'][0], imageTopOffset: number) {
-  const leftX = 400 + diff.box.x + diff.box.width  // 左侧图片右边 + 偏移
-  const leftY = imageTopOffset + 20 + diff.box.y + diff.box.height / 2
+  // 布局: 左图(0-400) + 中心分隔(400-460) + 右图(460-860)
+  // 中心分隔 = 60px
+  const leftColRight = 400  // 左侧列右边缘（也是左图右边缘）
+  const rightColLeft = 460  // 右侧列左边缘（也是右图左边缘）
   
-  const rightX = 400 + 60 + diff.box.x  // 中心分隔 + 右侧偏移
-  const rightY = imageTopOffset + 20 + diff.box.y + diff.box.height / 2
+  // 框的位置（相对于各自图片区域）
+  const boxLeft = diff.box.x
+  const boxTop = imageTopOffset + 20 + diff.box.y
+  const boxCenterY = boxTop + diff.box.height / 2
+  const boxRight = diff.box.x + diff.box.width
   
-  const centerX = 800 + 30  // 中间分隔线位置
+  // 连线起点：左侧框的右边缘
+  const startX = leftColRight + boxRight  // 直接在左图右边缘上
+  // 连线终点：右侧框的左边缘
+  const endX = rightColLeft + boxLeft    // 直接在右图左边缘上
   
-  // 贝塞尔曲线连接
-  return `M ${leftX} ${leftY} C ${centerX - 50} ${leftY}, ${centerX + 50} ${rightY}, ${rightX} ${rightY}`
+  // 贝塞尔曲线控制点：让曲线平滑穿过中间区域
+  const cpOffset = Math.abs(endX - startX) * 0.3
+  
+  return `M ${startX} ${boxCenterY} C ${startX + cpOffset} ${boxCenterY}, ${endX - cpOffset} ${boxCenterY}, ${endX} ${boxCenterY}`
 }
 </script>
 
@@ -126,13 +136,13 @@ function getConnectionPath(diff: typeof diffImages[0]['diffs'][0], imageTopOffse
                   <circle
                     :cx="400 + diff.box.x + diff.box.width"
                     :cy="pair.topOffset + 20 + diff.box.y + diff.box.height / 2"
-                    r="6"
+                    r="5"
                     :fill="diffColors[diff.type]"
                   />
                   <circle
-                    :cx="400 + 60 + diff.box.x"
+                    :cx="460 + diff.box.x"
                     :cy="pair.topOffset + 20 + diff.box.y + diff.box.height / 2"
-                    r="6"
+                    r="5"
                     :fill="diffColors[diff.type]"
                   />
                 </g>
