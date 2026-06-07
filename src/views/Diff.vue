@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { diffImages, diffColors } from '../data/diffData'
 
 const selectedDiffId = ref<string | null>(null)
+const loadedImages = ref<Set<string>>(new Set())
 
 // 计算每个图片对的累计高度（用于 SVG 连线定位）
 const imagePairs = computed(() => {
@@ -26,6 +27,11 @@ const totalHeight = computed(() => {
 
 function selectDiff(diffId: string) {
   selectedDiffId.value = selectedDiffId.value === diffId ? null : diffId
+}
+
+function onImageLoad(id: string) {
+  loadedImages.value.add(id)
+  loadedImages.value = new Set(loadedImages.value)
 }
 
 // 生成连接线的路径 - 从左侧框边缘直接连到右侧框边缘
@@ -160,7 +166,19 @@ function getConnectionPath(diff: typeof diffImages[0]['diffs'][0], imageTopOffse
             >
               <div class="image-label">#{{ pair.id }}</div>
               <div class="image-container">
-                <img :src="pair.leftImage" :alt="'Left ' + pair.id" class="diff-image" />
+                <!-- Gray placeholder shown while loading -->
+                <div 
+                  class="image-placeholder"
+                  :class="{ 'placeholder-hidden': loadedImages.has(pair.id + '-left') }"
+                ></div>
+                <!-- Actual image -->
+                <img 
+                  :src="pair.leftImage" 
+                  :alt="'Left ' + pair.id" 
+                  class="diff-image"
+                  :class="{ 'image-loaded': loadedImages.has(pair.id + '-left') }"
+                  @load="onImageLoad(pair.id + '-left')"
+                />
                 <!-- Diff overlays for left -->
                 <svg class="image-overlay" :viewBox="`0 0 800 ${pair.height}`">
                   <g v-for="diff in pair.diffs" :key="'left-' + diff.id">
@@ -222,7 +240,19 @@ function getConnectionPath(diff: typeof diffImages[0]['diffs'][0], imageTopOffse
             >
               <div class="image-label">#{{ pair.id }}</div>
               <div class="image-container">
-                <img :src="pair.rightImage" :alt="'Right ' + pair.id" class="diff-image" />
+                <!-- Gray placeholder shown while loading -->
+                <div 
+                  class="image-placeholder"
+                  :class="{ 'placeholder-hidden': loadedImages.has(pair.id + '-right') }"
+                ></div>
+                <!-- Actual image -->
+                <img 
+                  :src="pair.rightImage" 
+                  :alt="'Right ' + pair.id" 
+                  class="diff-image"
+                  :class="{ 'image-loaded': loadedImages.has(pair.id + '-right') }"
+                  @load="onImageLoad(pair.id + '-right')"
+                />
                 <!-- Diff overlays for right -->
                 <svg class="image-overlay" :viewBox="`0 0 800 ${pair.height}`">
                   <g v-for="diff in pair.diffs" :key="'right-' + diff.id">
@@ -514,6 +544,37 @@ function getConnectionPath(diff: typeof diffImages[0]['diffs'][0], imageTopOffse
 .diff-image {
   width: 100%;
   display: block;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.image-loaded {
+  opacity: 1;
+}
+
+.image-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #1a1a1a 0%,
+    #2a2a2a 50%,
+    #1a1a1a 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.placeholder-hidden {
+  display: none;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .image-overlay {
