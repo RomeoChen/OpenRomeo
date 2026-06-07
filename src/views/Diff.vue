@@ -49,7 +49,7 @@ function selectDiff(diffId: string) {
         <div class="logo">
           <span class="logo-text">ROME</span><span class="logo-accent">O</span>
         </div>
-        <h1 class="page-title">Image Diff Viewer</h1>
+        <h1 class="page-title">🔍 Image Diff Viewer</h1>
         <p class="page-subtitle">Visual Comparison Tool</p>
       </div>
     </header>
