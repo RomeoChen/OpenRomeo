@@ -2,42 +2,44 @@
 import { ref, computed } from 'vue'
 import { diffImages, diffColors } from '../data/diffData'
 
-const currentIndex = ref(0)
 const selectedDiffId = ref<string | null>(null)
 
-const currentImage = computed(() => diffImages[currentIndex.value])
-
-const diffStats = computed(() => {
-  const d = currentImage.value
-  return {
-    新增: d.diffs.filter(x => x.type === '新增').length,
-    修改: d.diffs.filter(x => x.type === '修改').length,
-    删除: d.diffs.filter(x => x.type === '删除').length,
-    总计: d.diffs.length,
-  }
+// 计算每个图片对的累计高度（用于 SVG 连线定位）
+const imagePairs = computed(() => {
+  const imagesPerRow = 800 // 每张图片展示高度
+  const gap = 60 // 行间距
+  
+  return diffImages.map((img, index) => {
+    const topOffset = index * (imagesPerRow + gap)
+    return {
+      ...img,
+      topOffset,
+      height: imagesPerRow
+    }
+  })
 })
 
-function nextImage() {
-  if (currentIndex.value < diffImages.length - 1) {
-    currentIndex.value++
-    selectedDiffId.value = null
-  }
-}
-
-function prevImage() {
-  if (currentIndex.value > 0) {
-    currentIndex.value--
-    selectedDiffId.value = null
-  }
-}
-
-function goToImage(index: number) {
-  currentIndex.value = index
-  selectedDiffId.value = null
-}
+// 总高度
+const totalHeight = computed(() => {
+  return diffImages.length * (800 + 60) + 200
+})
 
 function selectDiff(diffId: string) {
   selectedDiffId.value = selectedDiffId.value === diffId ? null : diffId
+}
+
+// 生成连接线的路径
+function getConnectionPath(diff: typeof diffImages[0]['diffs'][0], imageTopOffset: number) {
+  const leftX = 400 + diff.box.x + diff.box.width  // 左侧图片右边 + 偏移
+  const leftY = imageTopOffset + 20 + diff.box.y + diff.box.height / 2
+  
+  const rightX = 400 + 60 + diff.box.x  // 中心分隔 + 右侧偏移
+  const rightY = imageTopOffset + 20 + diff.box.y + diff.box.height / 2
+  
+  const centerX = 800 + 30  // 中间分隔线位置
+  
+  // 贝塞尔曲线连接
+  return `M ${leftX} ${leftY} C ${centerX - 50} ${leftY}, ${centerX + 50} ${rightY}, ${rightX} ${rightY}`
 }
 </script>
 
@@ -59,262 +61,200 @@ function selectDiff(diffId: string) {
       <!-- Stats Bar -->
       <div class="stats-bar">
         <div class="stats-left">
-          <span class="image-counter">
-            Image {{ currentIndex + 1 }} / {{ diffImages.length }}
-          </span>
+          <span class="total-images">{{ diffImages.length }} 组图片对比</span>
         </div>
         <div class="stats-center">
           <div class="stat-item stat-add">
             <span class="stat-dot"></span>
             <span class="stat-label">新增</span>
-            <span class="stat-value">{{ diffStats.新增 }}</span>
+            <span class="stat-value">{{ diffImages.reduce((sum, img) => sum + img.diffs.filter(d => d.type === '新增').length, 0) }}</span>
           </div>
           <div class="stat-item stat-modify">
             <span class="stat-dot"></span>
             <span class="stat-label">修改</span>
-            <span class="stat-value">{{ diffStats.修改 }}</span>
+            <span class="stat-value">{{ diffImages.reduce((sum, img) => sum + img.diffs.filter(d => d.type === '修改').length, 0) }}</span>
           </div>
           <div class="stat-item stat-delete">
             <span class="stat-dot"></span>
             <span class="stat-label">删除</span>
-            <span class="stat-value">{{ diffStats.删除 }}</span>
+            <span class="stat-value">{{ diffImages.reduce((sum, img) => sum + img.diffs.filter(d => d.type === '删除').length, 0) }}</span>
           </div>
         </div>
         <div class="stats-right">
-          <span class="total-label">Total:</span>
-          <span class="total-value">{{ diffStats.总计 }}</span>
+          <span class="total-label">总计:</span>
+          <span class="total-value">{{ diffImages.reduce((sum, img) => sum + img.diffs.length, 0) }}</span>
         </div>
       </div>
 
-      <!-- Image Comparison Area - Vertical Scroll -->
+      <!-- All Images Comparison -->
       <div class="comparison-container">
-        <!-- Left Column - Original -->
-        <div class="image-column left-column">
-          <div class="column-header">
-            <span class="column-label">Original</span>
-          </div>
-          <div class="image-wrapper">
-            <img :src="currentImage.leftImage" :alt="'Left ' + currentImage.id" class="diff-image" />
-            <!-- SVG Overlay for Left -->
-            <svg class="overlay-svg">
-              <defs>
-                <filter id="glow-green" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="3" result="blur"/>
-                  <feMerge>
-                    <feMergeNode in="blur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              
-              <!-- Diff boxes -->
-              <g v-for="diff in currentImage.diffs" :key="'left-' + diff.id">
-                <!-- Semi-transparent background for all -->
-                <rect
-                  :x="diff.box.x"
-                  :y="diff.box.y"
-                  :width="diff.box.width"
-                  :height="diff.box.height"
-                  :fill="diffColors[diff.type]"
-                  fill-opacity="0.15"
-                  rx="4"
-                  class="diff-region"
-                  @click="selectDiff(diff.id)"
-                  style="cursor: pointer"
-                />
-                
-                <!-- Selected: solid border + dashed line to center -->
-                <g v-if="selectedDiffId === diff.id">
-                  <rect
-                    :x="diff.box.x"
-                    :y="diff.box.y"
-                    :width="diff.box.width"
-                    :height="diff.box.height"
-                    :stroke="diffColors[diff.type]"
-                    stroke-width="3"
-                    fill="transparent"
-                    rx="4"
-                    filter="url(#glow-green)"
-                  />
-                  <!-- Dashed line to center -->
-                  <line
-                    :x1="diff.box.x + diff.box.width"
-                    :y1="diff.box.y + diff.box.height / 2"
-                    :x2="diff.box.x + diff.box.width + 40"
-                    :y2="diff.box.y + diff.box.height / 2"
-                    :stroke="diffColors[diff.type]"
-                    stroke-width="2"
-                    stroke-dasharray="6,3"
-                  />
-                  <!-- Label -->
-                  <rect
-                    :x="diff.box.x"
-                    :y="diff.box.y - 28"
-                    width="50"
-                    height="22"
-                    :fill="diffColors[diff.type]"
-                    rx="4"
-                  />
-                  <text
-                    :x="diff.box.x + 25"
-                    :y="diff.box.y - 12"
-                    fill="#000"
-                    font-size="11"
-                    font-weight="bold"
-                    text-anchor="middle"
-                  >
-                    {{ diff.type }}
-                  </text>
-                </g>
-              </g>
-            </svg>
-          </div>
+        <!-- Column Headers -->
+        <div class="column-headers">
+          <div class="column-header left-header">Original</div>
+          <div class="column-header right-header">Modified</div>
         </div>
-
-        <!-- Center Divider with Lines -->
-        <div class="center-divider" :class="{ 'has-selection': selectedDiffId }">
-          <svg class="connector-svg" v-if="selectedDiffId">
-            <path
-              v-for="diff in currentImage.diffs.filter(d => d.id === selectedDiffId)"
-              :key="'connector-' + diff.id"
-              :d="`M 0 ${diff.box.y + diff.box.height / 2} L 40 ${diff.box.y + diff.box.height / 2}`"
-              :stroke="diffColors[diff.type]"
-              stroke-width="2"
-              stroke-dasharray="6,3"
-            />
-          </svg>
-          <div class="center-hint" v-if="!selectedDiffId">
-            <span>点击差异点查看详情</span>
-          </div>
-        </div>
-
-        <!-- Right Column - Modified -->
-        <div class="image-column right-column">
-          <div class="column-header">
-            <span class="column-label">Modified</span>
-          </div>
-          <div class="image-wrapper">
-            <img :src="currentImage.rightImage" :alt="'Right ' + currentImage.id" class="diff-image" />
-            <!-- SVG Overlay for Right -->
-            <svg class="overlay-svg">
-              <!-- Diff boxes -->
-              <g v-for="diff in currentImage.diffs" :key="'right-' + diff.id">
-                <!-- Semi-transparent background for all -->
-                <rect
-                  :x="diff.box.x"
-                  :y="diff.box.y"
-                  :width="diff.box.width"
-                  :height="diff.box.height"
-                  :fill="diffColors[diff.type]"
-                  fill-opacity="0.15"
-                  rx="4"
-                  class="diff-region"
-                  @click="selectDiff(diff.id)"
-                  style="cursor: pointer"
-                />
-                
-                <!-- Selected: solid border + dashed line to center -->
-                <g v-if="selectedDiffId === diff.id">
-                  <rect
-                    :x="diff.box.x"
-                    :y="diff.box.y"
-                    :width="diff.box.width"
-                    :height="diff.box.height"
-                    :stroke="diffColors[diff.type]"
-                    stroke-width="3"
-                    fill="transparent"
-                    rx="4"
-                    filter="url(#glow-green)"
-                  />
-                  <!-- Dashed line to center -->
-                  <line
-                    :x1="diff.box.x - 40"
-                    :y1="diff.box.y + diff.box.height / 2"
-                    :x2="diff.box.x"
-                    :y2="diff.box.y + diff.box.height / 2"
-                    :stroke="diffColors[diff.type]"
-                    stroke-width="2"
-                    stroke-dasharray="6,3"
-                  />
-                  <!-- Label -->
-                  <rect
-                    :x="diff.box.x"
-                    :y="diff.box.y - 28"
-                    width="50"
-                    height="22"
-                    :fill="diffColors[diff.type]"
-                    rx="4"
-                  />
-                  <text
-                    :x="diff.box.x + 25"
-                    :y="diff.box.y - 12"
-                    fill="#000"
-                    font-size="11"
-                    font-weight="bold"
-                    text-anchor="middle"
-                  >
-                    {{ diff.type }}
-                  </text>
-                </g>
-              </g>
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <!-- Navigation -->
-      <div class="navigation">
-        <button class="nav-btn" @click="prevImage" :disabled="currentIndex === 0">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="15,18 9,12 15,6"></polyline>
-          </svg>
-          Previous
-        </button>
         
-        <div class="thumbnail-strip">
-          <button
-            v-for="(img, idx) in diffImages"
-            :key="img.id"
-            class="thumbnail"
-            :class="{ active: idx === currentIndex }"
-            @click="goToImage(idx)"
-          >
-            {{ idx + 1 }}
-          </button>
-        </div>
-
-        <button class="nav-btn" @click="nextImage" :disabled="currentIndex === diffImages.length - 1">
-          Next
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9,18 15,12 9,6"></polyline>
+        <!-- Image Rows Container -->
+        <div class="images-wrapper">
+          <!-- SVG Overlay for Connections -->
+          <svg class="connections-overlay" :height="totalHeight">
+            <defs>
+              <filter id="glow-green" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feMerge>
+                  <feMergeNode in="blur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            
+            <!-- Connection paths for all diffs -->
+            <g v-for="(pair, pIndex) in imagePairs" :key="'connections-' + pIndex">
+              <g v-for="diff in pair.diffs" :key="'path-' + diff.id">
+                <path
+                  :d="getConnectionPath(diff, pair.topOffset)"
+                  :stroke="diffColors[diff.type]"
+                  :stroke-width="selectedDiffId === diff.id ? 3 : 1.5"
+                  :stroke-opacity="selectedDiffId ? (selectedDiffId === diff.id ? 1 : 0.2) : 0.6"
+                  fill="none"
+                  :stroke-dasharray="selectedDiffId === diff.id ? 'none' : '6,4'"
+                  @click="selectDiff(diff.id)"
+                  style="cursor: pointer"
+                />
+                <!-- Connection circles at endpoints when selected -->
+                <g v-if="selectedDiffId === diff.id">
+                  <circle
+                    :cx="400 + diff.box.x + diff.box.width"
+                    :cy="pair.topOffset + 20 + diff.box.y + diff.box.height / 2"
+                    r="6"
+                    :fill="diffColors[diff.type]"
+                  />
+                  <circle
+                    :cx="400 + 60 + diff.box.x"
+                    :cy="pair.topOffset + 20 + diff.box.y + diff.box.height / 2"
+                    r="6"
+                    :fill="diffColors[diff.type]"
+                  />
+                </g>
+              </g>
+            </g>
           </svg>
-        </button>
-      </div>
-
-      <!-- Selected Diff Details -->
-      <div class="diff-details" v-if="selectedDiffId">
-        <div class="details-card">
-          <div class="details-header">
-            <span class="details-title">差异点详情</span>
-            <button class="close-btn" @click="selectedDiffId = null">×</button>
+          
+          <!-- Left Column -->
+          <div class="image-column left-column">
+            <div
+              v-for="(pair, pIndex) in imagePairs"
+              :key="'left-' + pair.id"
+              class="image-row"
+              :style="{ marginTop: pIndex > 0 ? '60px' : '0' }"
+            >
+              <div class="image-label">#{{ pair.id }}</div>
+              <div class="image-container">
+                <img :src="pair.leftImage" :alt="'Left ' + pair.id" class="diff-image" />
+                <!-- Diff overlays for left -->
+                <svg class="image-overlay" :viewBox="`0 0 800 ${pair.height}`">
+                  <g v-for="diff in pair.diffs" :key="'left-' + diff.id">
+                    <!-- Semi-transparent background -->
+                    <rect
+                      :x="diff.box.x"
+                      :y="diff.box.y"
+                      :width="diff.box.width"
+                      :height="diff.box.height"
+                      :fill="diffColors[diff.type]"
+                      :fill-opacity="selectedDiffId === diff.id ? 0.3 : 0.15"
+                      :stroke="diffColors[diff.type]"
+                      :stroke-width="selectedDiffId === diff.id ? 3 : 1.5"
+                      :stroke-opacity="selectedDiffId ? (selectedDiffId === diff.id ? 1 : 0.2) : 0.6"
+                      rx="4"
+                      class="diff-box"
+                      @click="selectDiff(diff.id)"
+                      style="cursor: pointer"
+                    />
+                    <!-- Label -->
+                    <rect
+                      :x="diff.box.x"
+                      :y="diff.box.y - 26"
+                      width="50"
+                      height="22"
+                      :fill="diffColors[diff.type]"
+                      rx="4"
+                      v-if="selectedDiffId === diff.id"
+                    />
+                    <text
+                      :x="diff.box.x + 25"
+                      :y="diff.box.y - 10"
+                      fill="#000"
+                      font-size="11"
+                      font-weight="bold"
+                      text-anchor="middle"
+                      v-if="selectedDiffId === diff.id"
+                    >
+                      {{ diff.type }}
+                    </text>
+                  </g>
+                </svg>
+              </div>
+            </div>
           </div>
-          <div class="details-content">
-            <div class="detail-row" v-for="diff in currentImage.diffs.filter(d => d.id === selectedDiffId)" :key="diff.id">
-              <div class="detail-item">
-                <span class="detail-label">ID</span>
-                <span class="detail-value">{{ diff.id }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">类型</span>
-                <span class="detail-value" :style="{ color: diffColors[diff.type] }">{{ diff.type }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">位置</span>
-                <span class="detail-value">X: {{ diff.box.x }}, Y: {{ diff.box.y }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">尺寸</span>
-                <span class="detail-value">{{ diff.box.width }} × {{ diff.box.height }}</span>
+          
+          <!-- Center Divider -->
+          <div class="center-divider">
+            <div class="divider-line"></div>
+          </div>
+          
+          <!-- Right Column -->
+          <div class="image-column right-column">
+            <div
+              v-for="(pair, pIndex) in imagePairs"
+              :key="'right-' + pair.id"
+              class="image-row"
+              :style="{ marginTop: pIndex > 0 ? '60px' : '0' }"
+            >
+              <div class="image-label">#{{ pair.id }}</div>
+              <div class="image-container">
+                <img :src="pair.rightImage" :alt="'Right ' + pair.id" class="diff-image" />
+                <!-- Diff overlays for right -->
+                <svg class="image-overlay" :viewBox="`0 0 800 ${pair.height}`">
+                  <g v-for="diff in pair.diffs" :key="'right-' + diff.id">
+                    <!-- Semi-transparent background -->
+                    <rect
+                      :x="diff.box.x"
+                      :y="diff.box.y"
+                      :width="diff.box.width"
+                      :height="diff.box.height"
+                      :fill="diffColors[diff.type]"
+                      :fill-opacity="selectedDiffId === diff.id ? 0.3 : 0.15"
+                      :stroke="diffColors[diff.type]"
+                      :stroke-width="selectedDiffId === diff.id ? 3 : 1.5"
+                      :stroke-opacity="selectedDiffId ? (selectedDiffId === diff.id ? 1 : 0.2) : 0.6"
+                      rx="4"
+                      class="diff-box"
+                      @click="selectDiff(diff.id)"
+                      style="cursor: pointer"
+                    />
+                    <!-- Label -->
+                    <rect
+                      :x="diff.box.x"
+                      :y="diff.box.y - 26"
+                      width="50"
+                      height="22"
+                      :fill="diffColors[diff.type]"
+                      rx="4"
+                      v-if="selectedDiffId === diff.id"
+                    />
+                    <text
+                      :x="diff.box.x + 25"
+                      :y="diff.box.y - 10"
+                      fill="#000"
+                      font-size="11"
+                      font-weight="bold"
+                      text-anchor="middle"
+                      v-if="selectedDiffId === diff.id"
+                    >
+                      {{ diff.type }}
+                    </text>
+                  </g>
+                </svg>
               </div>
             </div>
           </div>
@@ -323,6 +263,10 @@ function selectDiff(diffId: string) {
 
       <!-- Legend -->
       <div class="legend">
+        <div class="legend-item" @click="selectedDiffId = null" style="cursor: pointer">
+          <span class="legend-box all"></span>
+          <span class="legend-text">全部显示</span>
+        </div>
         <div class="legend-item">
           <span class="legend-box add"></span>
           <span class="legend-text">新增 (Added)</span>
@@ -347,6 +291,10 @@ function selectDiff(diffId: string) {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500&display=swap');
+
+* {
+  box-sizing: border-box;
+}
 
 .diff-page {
   min-height: 100vh;
@@ -448,10 +396,7 @@ function selectDiff(diffId: string) {
   box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
 }
 
-.stat-label {
-  font-size: 13px;
-  color: #888;
-}
+.stat-label { font-size: 13px; color: #888; }
 
 .stat-value {
   font-family: 'JetBrains Mono', monospace;
@@ -460,7 +405,7 @@ function selectDiff(diffId: string) {
   color: #fff;
 }
 
-.image-counter {
+.total-images {
   font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
   color: #888;
@@ -481,24 +426,21 @@ function selectDiff(diffId: string) {
   color: #fff;
 }
 
-/* Comparison Container - Vertical Layout */
+/* Comparison Container */
 .comparison-container {
-  display: flex;
-  gap: 0;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   overflow: hidden;
 }
 
-.image-column {
-  flex: 1;
+.column-headers {
   display: flex;
-  flex-direction: column;
-  min-height: 600px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .column-header {
+  flex: 1;
   padding: 12px;
   text-align: center;
   font-family: 'JetBrains Mono', monospace;
@@ -507,48 +449,82 @@ function selectDiff(diffId: string) {
   text-transform: uppercase;
   color: #666;
   background: rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  position: sticky;
+}
+
+.left-header {
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.images-wrapper {
+  display: flex;
+  position: relative;
+  min-height: 1000px;
+}
+
+/* SVG Overlay */
+.connections-overlay {
+  position: absolute;
   top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
   z-index: 10;
 }
 
-.image-wrapper {
-  position: relative;
+.connections-overlay path {
+  pointer-events: stroke;
+}
+
+/* Image Columns */
+.image-column {
   flex: 1;
   padding: 20px;
-  overflow-y: auto;
-  max-height: calc(100vh - 400px);
+}
+
+.image-row {
+  position: relative;
+}
+
+.image-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.image-container {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .diff-image {
   width: 100%;
   display: block;
-  border-radius: 8px;
 }
 
-.overlay-svg {
+.image-overlay {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  width: calc(100% - 40px);
-  height: calc(100% - 40px);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
 
-.diff-region {
+.diff-box {
   pointer-events: auto;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.diff-region:hover {
-  fill-opacity: 0.3;
-}
-
 /* Center Divider */
 .center-divider {
   width: 60px;
+  min-width: 60px;
   background: linear-gradient(180deg, 
     rgba(59, 130, 246, 0.05) 0%, 
     rgba(59, 130, 246, 0.1) 50%, 
@@ -557,181 +533,20 @@ function selectDiff(diffId: string) {
   border-left: 1px solid rgba(255, 255, 255, 0.1);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
-  display: flex;
-  align-items: flex-start;
-  padding-top: 20px;
 }
 
-.center-divider.has-selection {
-  background: linear-gradient(180deg, 
-    rgba(59, 130, 246, 0.1) 0%, 
-    rgba(59, 130, 246, 0.2) 50%, 
-    rgba(59, 130, 246, 0.1) 100%
-  );
-}
-
-.connector-svg {
-  width: 60px;
+.divider-line {
   position: absolute;
-  left: 0;
-}
-
-.center-hint {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  font-size: 11px;
-  color: #444;
-  letter-spacing: 2px;
-  padding: 10px 0;
-}
-
-/* Navigation */
-.navigation {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-top: 30px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-}
-
-.nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 8px;
-  color: #3b82f6;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.nav-btn:hover:not(:disabled) {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: rgba(59, 130, 246, 0.5);
-}
-
-.nav-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.thumbnail-strip {
-  flex: 1;
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 8px 0;
-}
-
-.thumbnail {
-  min-width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: #888;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.thumbnail:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-.thumbnail.active {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: #3b82f6;
-  color: #3b82f6;
-}
-
-/* Diff Details Panel */
-.diff-details {
-  margin-top: 24px;
-}
-
-.details-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.details-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: rgba(59, 130, 246, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.details-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  font-weight: 500;
-  color: #3b82f6;
-}
-
-.close-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: 6px;
-  color: #888;
-  font-size: 18px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
-}
-
-.details-content {
-  padding: 20px;
-}
-
-.detail-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.detail-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #666;
-}
-
-.detail-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  color: #fff;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, 
+    rgba(59, 130, 246, 0.2) 0%, 
+    rgba(59, 130, 246, 0.4) 50%, 
+    rgba(59, 130, 246, 0.2) 100%
+  );
 }
 
 /* Legend */
@@ -739,7 +554,7 @@ function selectDiff(diffId: string) {
   display: flex;
   justify-content: center;
   gap: 40px;
-  margin-top: 24px;
+  margin-top: 30px;
   padding: 16px;
 }
 
@@ -747,6 +562,11 @@ function selectDiff(diffId: string) {
   display: flex;
   align-items: center;
   gap: 10px;
+  transition: opacity 0.2s;
+}
+
+.legend-item:hover {
+  opacity: 0.8;
 }
 
 .legend-box {
@@ -754,6 +574,11 @@ function selectDiff(diffId: string) {
   height: 24px;
   border-radius: 4px;
   border: 2px solid;
+}
+
+.legend-box.all {
+  background: linear-gradient(135deg, #22c55e 33%, #eab308 33% 66%, #ef4444 66%);
+  border-color: #fff;
 }
 
 .legend-box.add {
@@ -792,55 +617,62 @@ function selectDiff(diffId: string) {
   margin: 0;
 }
 
-/* Responsive - Tablet & Mobile keep side-by-side */
+/* Responsive */
 @media (max-width: 1200px) {
-  .detail-row {
-    grid-template-columns: repeat(2, 1fr);
+  .diff-main {
+    padding: 20px;
+  }
+  
+  .stats-bar {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .stats-center {
+    order: -1;
+    width: 100%;
+    justify-content: center;
   }
 }
 
 @media (max-width: 900px) {
-  .comparison-container {
-    gap: 0;
-  }
-  
-  .image-column {
-    min-height: auto;
-  }
-  
-  .image-wrapper {
-    max-height: none;
-    overflow-y: visible;
-    padding: 10px;
-  }
-  
-  .diff-image {
-    width: 100%;
-    height: auto;
-  }
-  
-  .overlay-svg {
-    top: 10px;
-    left: 10px;
-    width: calc(100% - 20px);
-    height: calc(100% - 20px);
+  .images-wrapper {
+    flex-direction: column;
   }
   
   .center-divider {
-    width: 40px;
-    padding-top: 10px;
+    width: 100%;
+    height: 30px;
+    min-width: unset;
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
   
-  .connector-svg {
-    width: 40px;
+  .divider-line {
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    width: 100%;
+    height: 2px;
+  }
+  
+  .image-column {
+    padding: 10px;
+  }
+  
+  .connections-overlay {
+    display: none;
+  }
+  
+  .legend {
+    gap: 20px;
+    flex-wrap: wrap;
   }
 }
 
 @media (max-width: 768px) {
-  .diff-main {
-    padding: 15px;
-  }
-  
   .diff-header {
     padding: 40px 20px 30px;
   }
@@ -849,164 +681,25 @@ function selectDiff(diffId: string) {
     font-size: 24px;
   }
   
-  .stats-bar {
-    flex-direction: column;
-    gap: 12px;
-    padding: 12px 16px;
+  .diff-main {
+    padding: 15px;
   }
   
-  .stats-center {
-    order: -1;
-    gap: 20px;
+  .stats-bar {
+    padding: 12px 16px;
   }
   
   .stat-value {
     font-size: 16px;
   }
   
-  .comparison-container {
-    flex-direction: row;
-    border-radius: 12px;
-  }
-  
-  .image-column {
-    flex: 1;
-    min-width: 0;
-  }
-  
-  .column-header {
-    padding: 8px;
-    font-size: 10px;
-  }
-  
-  .image-wrapper {
-    padding: 8px;
-    min-height: 200px;
-  }
-  
-  .diff-image {
-    border-radius: 6px;
-  }
-  
-  .overlay-svg {
-    top: 8px;
-    left: 8px;
-    width: calc(100% - 16px);
-    height: calc(100% - 16px);
-  }
-  
-  .center-divider {
-    width: 30px;
-    min-width: 30px;
-    padding-top: 8px;
-  }
-  
-  .connector-svg {
-    width: 30px;
-  }
-  
-  .center-hint {
-    font-size: 9px;
-    letter-spacing: 1px;
-  }
-  
-  .navigation {
-    padding: 12px;
-    gap: 12px;
-  }
-  
-  .nav-btn {
-    padding: 10px 14px;
-    font-size: 12px;
-  }
-  
-  .thumbnail {
-    min-width: 30px;
-    height: 30px;
-    font-size: 10px;
-  }
-  
-  .details-content {
-    padding: 15px;
-  }
-  
-  .detail-row {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  
-  .detail-value {
-    font-size: 12px;
-  }
-  
   .legend {
-    gap: 20px;
+    gap: 16px;
     padding: 12px;
   }
   
   .legend-text {
     font-size: 11px;
-  }
-  
-  .diff-footer {
-    padding: 20px;
-    margin-top: 20px;
-  }
-}
-
-/* Small mobile - 480px and below */
-@media (max-width: 480px) {
-  .diff-page {
-    font-size: 14px;
-  }
-  
-  .comparison-container {
-    border-radius: 8px;
-  }
-  
-  .image-wrapper {
-    padding: 5px;
-    min-height: 150px;
-  }
-  
-  .overlay-svg {
-    top: 5px;
-    left: 5px;
-    width: calc(100% - 10px);
-    height: calc(100% - 10px);
-  }
-  
-  .center-divider {
-    width: 24px;
-    min-width: 24px;
-    padding-top: 5px;
-  }
-  
-  .center-hint {
-    font-size: 8px;
-  }
-  
-  .stat-item {
-    gap: 4px;
-  }
-  
-  .stat-label {
-    font-size: 11px;
-  }
-  
-  .stat-value {
-    font-size: 14px;
-  }
-  
-  .thumbnail-strip {
-    gap: 4px;
-  }
-  
-  .thumbnail {
-    min-width: 26px;
-    height: 26px;
-    font-size: 9px;
-    border-radius: 4px;
   }
 }
 </style>
